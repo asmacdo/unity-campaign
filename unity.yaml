@@ -1,0 +1,18 @@
+# Unity cluster profile — the live one. The mechababs repo's
+# examples/clusters/unity.yaml is an example and stays generic; this is what
+# actually runs, so the real paths live here rather than in that repo.
+#
+# apptainer is already on PATH (no module load) and `cpu` is the default
+# partition, so neither needs a line here.
+script_preamble: |
+  # Unity ships no git-annex, and its SLURM does not inherit the login shell's
+  # PATH into jobs, so the compute node has to be told where it is. Without
+  # this, git's annex smudge filter fails and the job dies early.
+  export PATH="/work/pi_d31548v_dartmouth_edu/asmacdo/tools/usr/bin:$PATH"
+  # campaign venv (abspath substituted at compose time by merge_config)
+  source "{{MECHABABS_VENV}}/bin/activate"
+  export JOB_TMP="/work/pi_d31548v_dartmouth_edu/asmacdo/sjob-tmp/${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
+  mkdir -p "${JOB_TMP}"
+  trap 'rm -rf "${JOB_TMP}"' EXIT
+
+job_compute_space: "/work/pi_d31548v_dartmouth_edu/asmacdo"
