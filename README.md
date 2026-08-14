@@ -20,7 +20,7 @@ FS license is **not** under the root: `/home/f006rq8_dartmouth_edu/license.txt`.
 ## Run
 
 ```bash
-salloc --partition=cpu                    # compute node, NOT login
+unity-compute                             # compute node, NOT login
 source ~/devel/unity-campaign/env.sh
 ./setup.sh
 

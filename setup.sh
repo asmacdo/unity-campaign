@@ -3,7 +3,7 @@
 # Idempotent: re-run it after a wipe, or to fill in a step that failed.
 #
 # Run this on a COMPUTE node, not a login node:
-#     salloc --partition=cpu
+#     unity-compute
 # Login nodes have a strict cgroup that kills uv mid-install, and the killed
 # process's open fd leaves an NFS .nfsXXXX turd that makes the enclosing rmdir
 # fail. Three login-node attempts failed that way on 2026-07-18; a compute node
