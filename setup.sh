@@ -50,7 +50,7 @@ say "datalad"
 if command -v datalad >/dev/null; then
     echo "already on PATH: $(command -v datalad)"
 else
-    UV_TOOL_DIR="$SITE_ROOT/.uv-tools" uv tool install datalad
+    UV_TOOL_DIR="$SITE_ROOT/.uv-tools" uv tool install datalad --with datalad-container
     echo "installed — run 'rehash' (zsh) if datalad is not found this shell"
 fi
 
@@ -88,13 +88,13 @@ say "container shim"
 # Temporary: vanilla babs reads images from its own hardcoded path, so the shim
 # re-registers them there. Goes away when PennLINC/babs#383 lands.
 SHIM="$SITE_ROOT/repronim-containers-shim"
-if [ -d "$SHIM" ]; then
-    echo "already built: $SHIM"
-else
-    curl -sSL "$MECHABABS_SHIM_URL" -o "$SITE_ROOT/tmp-repronim-container-shim.sh"
-    chmod +x "$SITE_ROOT/tmp-repronim-container-shim.sh"
-    REPRONIM="$SHIM" "$SITE_ROOT/tmp-repronim-container-shim.sh" bids-mriqc bids-fmriprep
-fi
+# The shim script is itself idempotent (clone is guarded, `datalad get` no-ops
+# on present SIFs, `containers-add --update` re-registers harmlessly), so always
+# run it. A plain dir-exists guard would skip it after a partial failure that
+# left the ReproNim clone but registered no images.
+curl -sSL "$MECHABABS_SHIM_URL" -o "$SITE_ROOT/tmp-repronim-container-shim.sh"
+chmod +x "$SITE_ROOT/tmp-repronim-container-shim.sh"
+REPRONIM="$SHIM" "$SITE_ROOT/tmp-repronim-container-shim.sh" bids-mriqc bids-fmriprep
 
 say "verify"
 for t in git uv apptainer git-annex datalad; do
