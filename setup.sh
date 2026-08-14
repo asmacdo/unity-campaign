@@ -39,7 +39,7 @@ say "git-annex"
 if command -v git-annex >/dev/null; then
     echo "already on PATH: $(command -v git-annex) ($(git-annex version --raw))"
 else
-    uvx --from datalad-installer datalad-installer --sudo=none git-annex \
+    uvx --from datalad-installer datalad-installer --sudo=error git-annex \
         -m datalad/git-annex:release --install-dir "$SITE_ROOT/tools"
 fi
 
