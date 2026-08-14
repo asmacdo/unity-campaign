@@ -23,7 +23,7 @@ say() { printf '\n=== %s\n' "$*"; }
 
 say "site root: $SITE_ROOT"
 [ -d "$SITE_ROOT" ] || { echo "PI space $SITE_ROOT does not exist"; exit 1; }
-mkdir -p "$SITE_ROOT"/{tools,sjob-tmp,.uv-cache,.apptainer-cache,.apptainer-tmp,.proot-tmp}
+mkdir -p "$SITE_ROOT"/{tools,sjob-tmp,.uv-cache,.uv-tools,.apptainer-cache,.apptainer-tmp,.proot-tmp}
 
 say "uv"
 if command -v uv >/dev/null; then
@@ -41,6 +41,17 @@ if command -v git-annex >/dev/null; then
 else
     uvx --from datalad-installer datalad-installer --sudo=error git-annex \
         -m datalad/git-annex:release --install-dir "$SITE_ROOT/tools"
+fi
+
+say "datalad"
+# Unity ships none, and setup runs before any campaign venv exists, so datalad
+# is a site tool like uv/git-annex. Keep the heavy tool venv in the site root
+# (HOME's quota bites on file count); the shim lands in ~/.local/bin, on PATH.
+if command -v datalad >/dev/null; then
+    echo "already on PATH: $(command -v datalad)"
+else
+    UV_TOOL_DIR="$SITE_ROOT/.uv-tools" uv tool install datalad
+    echo "installed — run 'rehash' (zsh) if datalad is not found this shell"
 fi
 
 say "FreeSurfer license"
