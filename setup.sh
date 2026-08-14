@@ -23,7 +23,7 @@ say() { printf '\n=== %s\n' "$*"; }
 
 say "site root: $SITE_ROOT"
 [ -d "$SITE_ROOT" ] || { echo "PI space $SITE_ROOT does not exist"; exit 1; }
-mkdir -p "$SITE_ROOT"/{tools,sjob-tmp,.uv-cache,.uv-tools,.apptainer-cache,.apptainer-tmp,.proot-tmp}
+mkdir -p "$SITE_ROOT"/{tools,sjob-tmp,job-compute,.uv-cache,.uv-tools,.apptainer-cache,.apptainer-tmp,.proot-tmp}
 
 say "uv"
 if command -v uv >/dev/null; then

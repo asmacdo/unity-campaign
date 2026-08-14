@@ -15,4 +15,7 @@ script_preamble: |
   mkdir -p "${JOB_TMP}"
   trap 'rm -rf "${JOB_TMP}"' EXIT
 
-job_compute_space: "/work/pi_d31548v_dartmouth_edu/asmacdo"
+# Per-job working clones (`job-<id>-<task>-<sub>-<ses>/`) land under here. Point
+# it at a dedicated subdir, not the PI-space root, so they don't litter it beside
+# the campaign/tools/templateflow. (setup.sh creates it.)
+job_compute_space: "/work/pi_d31548v_dartmouth_edu/asmacdo/job-compute"
