@@ -19,12 +19,18 @@ FS license is **not** under the root: `/home/f006rq8_dartmouth_edu/license.txt`.
 | `bids-app-configs/` | live app configs, study-first format (repo examples + site paths) |
 | `old-pipelines/` | the pre-study-first set, kept until the ported configs have a green run |
 
+## When to run which
+
+- `site-env.sh` — **every fresh shell**, before anything else. No exceptions; forgetting it is the mistake that has cost the most time here.
+- `setup.sh` — **rarely**: first time on a machine, after a PI-space wipe, or when a preflight check says something is missing. Not routine.
+- `new-campaign-preflight.sh` — **before each `campaign init`**, and any time something looks off. Read-only and cheap, so run it whenever you are unsure.
+
 ## Run
 
 ```bash
 unity-compute                             # compute node, NOT login
 source ~/devel/unity-campaign/site-env.sh
-./setup.sh                                # stage
+./setup.sh                                # only if staging is missing
 ./new-campaign-preflight.sh               # verify, and print the init command
 
 # from the STUDY root; campaign init replaces bootstrap.sh + configure
