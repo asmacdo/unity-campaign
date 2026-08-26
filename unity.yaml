@@ -9,14 +9,24 @@ script_preamble: |
   # PATH into jobs, so the compute node has to be told where it is. Without
   # this, git's annex smudge filter fails and the job dies early.
   export PATH="/work/pi_d31548v_dartmouth_edu/asmacdo/tools/usr/bin:$PATH"
-  # campaign venv (abspath substituted at compose time, from the campaign mechababs
-  # is operating on — the config itself stays free of that abspath)
+  # Per-job scratch lives in an HPC workspace, NOT the PI space: the 2026-08
+  # shakeout kept it in the PI dir, ~36 concurrent jobs' working clones filled
+  # that quota, and jobs died on Errno 122. The /scratchN index is assigned at
+  # allocation and is not derivable, so discover it rather than baking it in —
+  # nothing is inherited from the submitting shell, so this runs per job.
+  SCRATCH_ROOT="$(ws_find mechababs 2>/dev/null)"
+  [ -n "$SCRATCH_ROOT" ] || { echo "no 'mechababs' workspace visible from $(hostname) — ws_allocate mechababs 30" >&2; exit 1; }
+  export SCRATCH_ROOT
+  mkdir -p "${SCRATCH_ROOT}/job-compute"
+  # campaign venv (abspath substituted at compose time, from the campaign
+  # mechababs is operating on — the config itself stays free of that abspath)
   source "{{MECHABABS_VENV}}/bin/activate"
-  export JOB_TMP="/work/pi_d31548v_dartmouth_edu/asmacdo/sjob-tmp/${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
+  export JOB_TMP="${SCRATCH_ROOT}/sjob-tmp/${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
   mkdir -p "${JOB_TMP}"
   trap 'rm -rf "${JOB_TMP}"' EXIT
 
-# Per-job working clones (`job-<id>-<task>-<sub>-<ses>/`) land under here. Point
-# it at a dedicated subdir, not the PI-space root, so they don't litter it beside
-# the campaign/tools/templateflow. (setup.sh creates it.)
-job_compute_space: "/work/pi_d31548v_dartmouth_edu/asmacdo/job-compute"
+# Per-job working clones (`job-<id>-<task>-<sub>-<ses>/`) land under here. babs
+# templates this into participant_job.sh as `cd "<value>"` AFTER script_preamble
+# runs, so a variable the preamble exports resolves at job time — which is what
+# keeps the assigned /scratchN index out of every committed config.
+job_compute_space: "${SCRATCH_ROOT}/job-compute"
