@@ -6,15 +6,16 @@ mechababs:
     require_datatypes: [anat]
     require_positive: [t1w_num]
   container:
-    # The shim rather than ReproNim/containers directly: native layout resolution
-    # needs babs with PennLINC/babs#399, which no release carries yet (latest is
-    # 0.5.4) and a campaign's default babs is the latest release. Swap the source
-    # to https://github.com/ReproNim/containers once a release carries it
-    # (con/mechababs#62).
+    # A plain ReproNim/containers clone — no shim. babs resolves the image out of
+    # the datalad-containers registration (images/bids/bids-fmriprep--25.2.5.sif) rather than
+    # its own hardcoded layout, which needs babs carrying PennLINC/babs#399:
+    # merged upstream, in no release yet, so the campaign pins babs by git ref
+    # instead of taking the released default.
     #
-    # ABSOLUTE on purpose: a relative source resolves against the STUDY root, and
-    # the shim is a site-wide checkout, not a sibling of any one study.
-    source: /work/pi_d31548v_dartmouth_edu/asmacdo/repronim-containers-shim
+    # ABSOLUTE and local on purpose: a relative source resolves against the STUDY
+    # root, and babs installs this dataset into every derivative it inits, so a
+    # URL would pay a fresh clone per cell.
+    source: /work/pi_d31548v_dartmouth_edu/asmacdo/containers
     name: bids-fmriprep
 
 # BIDS-study layout (babs#369): the babs project root IS the analysis dataset,
