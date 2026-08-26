@@ -14,6 +14,7 @@ FS license is **not** under the root: `/home/f006rq8_dartmouth_edu/license.txt`.
 |---|---|
 | `env.sh` | source in **every** shell running git/datalad/babs/mechababs. The venv does not replace it. |
 | `setup.sh` | stages prereqs into the site root. Idempotent. |
+| `new-campaign-preflight.sh` | checks that staging before `campaign init`. Changes nothing. |
 | `unity.yaml` | live cluster profile |
 | `bids-app-configs/` | live app configs, study-first format (repo examples + site paths) |
 | `old-pipelines/` | the pre-study-first set, kept until the ported configs have a green run |
@@ -22,11 +23,13 @@ FS license is **not** under the root: `/home/f006rq8_dartmouth_edu/license.txt`.
 
 ```bash
 unity-compute                             # compute node, NOT login
-source ~/devel/unity-campaign/env.sh
-./setup.sh
+source ~/unity-campaign/env.sh
+./setup.sh                                # stage
+./new-campaign-preflight.sh               # verify, and print the init command
 
 # from the STUDY root; campaign init replaces bootstrap.sh + configure
 uvx --from git+https://github.com/con/mechababs@study-first-rewrite mechababs campaign init <label> \
+    --babs https://github.com/PennLINC/babs.git@main \
     --cluster ~/unity-campaign/unity.yaml \
     --apps ~/unity-campaign/bids-app-configs/MRIQC-24.0.2.yaml
 source .mechababs/campaigns/<label>/env.sh
@@ -35,6 +38,15 @@ source .mechababs/campaigns/<label>/env.sh
 The configs are named by **path** and copied into the campaign, so this repo stays
 the place the real site paths live. The `@study-first-rewrite` ref is the feature
 branch — it becomes a release tag once con/mechababs#114 merges.
+
+`--babs` is not optional. The released babs predates `PennLINC/babs#399`, so it
+cannot resolve images out of ReproNim/containers, and the latest on PyPI is too
+old to use here anyway. Bare `main` is enough for MRIQC; real fmriprep runs want
+a working branch carrying `PennLINC/babs#395` and `PennLINC/babs#393` on top of
+it.
+
+Per-job scratch lives in an HPC workspace, not the PI space — `ws_allocate
+mechababs 30` once, and `env.sh` warns in every shell as it nears expiry.
 
 Long runs under `tmux`.
 

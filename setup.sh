@@ -17,13 +17,13 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./env.sh
 
-MECHABABS_SHIM_URL=https://raw.githubusercontent.com/con/mechababs/main/tmp-repronim-container-shim.sh
-
 say() { printf '\n=== %s\n' "$*"; }
 
 say "site root: $SITE_ROOT"
 [ -d "$SITE_ROOT" ] || { echo "PI space $SITE_ROOT does not exist"; exit 1; }
-mkdir -p "$SITE_ROOT"/{tools,sjob-tmp,job-compute,.uv-cache,.uv-tools,.apptainer-cache,.apptainer-tmp,.proot-tmp}
+# sjob-tmp and job-compute are deliberately absent: per-job scratch lives in the
+# HPC workspace now (see env.sh SCRATCH_ROOT), and the job preamble creates them.
+mkdir -p "$SITE_ROOT"/{tools,.uv-cache,.uv-tools,.apptainer-cache,.apptainer-tmp,.proot-tmp}
 
 say "uv"
 if command -v uv >/dev/null; then
@@ -84,17 +84,22 @@ for t in "${TEMPLATES[@]}"; do
     datalad get -d "$TEMPLATEFLOW_DIR" -r "$TEMPLATEFLOW_DIR/tpl-$t"
 done
 
-say "container shim"
-# Temporary: vanilla babs reads images from its own hardcoded path, so the shim
-# re-registers them there. Goes away when PennLINC/babs#383 lands.
-SHIM="$SITE_ROOT/repronim-containers-shim"
-# The shim script is itself idempotent (clone is guarded, `datalad get` no-ops
-# on present SIFs, `containers-add --update` re-registers harmlessly), so always
-# run it. A plain dir-exists guard would skip it after a partial failure that
-# left the ReproNim clone but registered no images.
-curl -sSL "$MECHABABS_SHIM_URL" -o "$SITE_ROOT/tmp-repronim-container-shim.sh"
-chmod +x "$SITE_ROOT/tmp-repronim-container-shim.sh"
-REPRONIM="$SHIM" "$SITE_ROOT/tmp-repronim-container-shim.sh" bids-mriqc bids-fmriprep
+say "ReproNim/containers -> $SITE_ROOT/containers"
+# A plain clone, no shim: babs carrying PennLINC/babs#399 resolves the image out
+# of the datalad-containers registration, so nothing has to re-register the
+# images at babs' own hardcoded path any more. The campaign must pin babs by git
+# ref for that -- no release carries #399.
+CONTAINERS="$SITE_ROOT/containers"
+if [ -d "$CONTAINERS/.datalad" ]; then
+    echo "clone already present"
+else
+    datalad clone https://github.com/ReproNim/containers "$CONTAINERS"
+fi
+# Fetch only the images the app configs name; the dataset registers many.
+for img in images/bids/bids-mriqc--24.0.2.sif images/bids/bids-fmriprep--25.2.5.sif; do
+    echo "--- get $img"
+    datalad get -d "$CONTAINERS" "$CONTAINERS/$img"
+done
 
 say "verify"
 for t in git uv apptainer git-annex datalad; do
@@ -105,8 +110,6 @@ git --version   # jobs need >= 2.25 for sparse-checkout
 cat <<EOF
 
 Done. Next:
-  source $(pwd)/env.sh          # in every shell, including before campaign init
-  # from the STUDY root, on a compute node:
-  uvx --from git+https://github.com/con/mechababs@study-first-rewrite mechababs campaign init <label> \\
-      --cluster $(pwd)/unity.yaml --apps $(pwd)/bids-app-configs/MRIQC-24.0.2.yaml
+  source $(pwd)/env.sh                    # in every shell, including before campaign init
+  $(pwd)/new-campaign-preflight.sh        # verifies this staging, prints the init command
 EOF
