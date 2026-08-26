@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # new-campaign-preflight.sh — RUN me (don't source) before `mechababs campaign init`.
 #
-#     source ~/unity-campaign/env.sh && ~/unity-campaign/new-campaign-preflight.sh
+#     source ~/devel/unity-campaign/site-env.sh && ~/devel/unity-campaign/new-campaign-preflight.sh
 #
 # Checks only: it stages nothing and changes no environment, so it is safe to
 # re-run. Staging is setup.sh's job; this says whether staging worked.
 #
 # There is deliberately no existing-campaign counterpart. Operating a campaign
-# that already exists is covered by env.sh (git-annex, caches, workspace expiry),
+# that already exists is covered by site-env.sh (git-annex, caches, workspace expiry),
 # the campaign's own env.sh (selection + venv), and mechababs' env-match guard,
 # which refuses to run when the environment does not match the committed lock.
 
@@ -25,7 +25,7 @@ echo
 echo "== environment"
 
 if [ -z "${SITE_ROOT:-}" ]; then
-    fail "SITE_ROOT unset — source ~/unity-campaign/env.sh first"
+    fail "SITE_ROOT unset — source ~/devel/unity-campaign/site-env.sh first"
     echo
     echo "Nothing else can be checked without it. Stopping."
     exit 1

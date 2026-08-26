@@ -1,5 +1,10 @@
 # Source this in every Unity shell that runs git, datalad, babs or mechababs.
-#   source ~/unity-campaign/env.sh
+#   source ~/devel/unity-campaign/site-env.sh
+#
+# NOT the same file as a campaign's own env.sh, which mechababs scaffolds at
+# .mechababs/campaigns/<label>/env.sh to select that campaign and activate its
+# venv. This one is site-wide and comes first; that one is per-campaign. Source
+# both, in that order.
 #
 # Three separate reasons this file exists:
 #   1. git-annex is not on Unity's PATH at all, and git's smudge filter fails
@@ -10,7 +15,7 @@
 #   3. Per-job scratch has to land in an HPC workspace rather than the PI space.
 #      The 2026-08 shakeout put it in the PI dir, ~36 concurrent jobs' working
 #      clones filled that quota, and jobs died on Errno 122.
-# Activating a campaign venv does NOT do any of this.
+# A campaign's env.sh does NOT do any of this.
 
 # ---------------------------------------------------------------- persistent --
 # Campaign, tools, templateflow. Quota'd; survives a job, but IS wiped by hand

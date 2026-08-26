@@ -15,14 +15,14 @@
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
-source ./env.sh
+source ./site-env.sh
 
 say() { printf '\n=== %s\n' "$*"; }
 
 say "site root: $SITE_ROOT"
 [ -d "$SITE_ROOT" ] || { echo "PI space $SITE_ROOT does not exist"; exit 1; }
 # sjob-tmp and job-compute are deliberately absent: per-job scratch lives in the
-# HPC workspace now (see env.sh SCRATCH_ROOT), and the job preamble creates them.
+# HPC workspace now (see site-env.sh SCRATCH_ROOT), and the job preamble creates them.
 mkdir -p "$SITE_ROOT"/{tools,.uv-cache,.uv-tools,.apptainer-cache,.apptainer-tmp,.proot-tmp}
 
 say "uv"
@@ -113,6 +113,6 @@ git --version   # jobs need >= 2.25 for sparse-checkout
 cat <<EOF
 
 Done. Next:
-  source $(pwd)/env.sh                    # in every shell, including before campaign init
+  source $(pwd)/site-env.sh                    # in every shell, including before campaign init
   $(pwd)/new-campaign-preflight.sh        # verifies this staging, prints the init command
 EOF

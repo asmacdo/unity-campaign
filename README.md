@@ -12,7 +12,7 @@ FS license is **not** under the root: `/home/f006rq8_dartmouth_edu/license.txt`.
 
 | | |
 |---|---|
-| `env.sh` | source in **every** shell running git/datalad/babs/mechababs. The venv does not replace it. |
+| `site-env.sh` | source in **every** shell running git/datalad/babs/mechababs. Distinct from a campaign's own scaffolded `env.sh`; source this one first. |
 | `setup.sh` | stages prereqs into the site root. Idempotent. |
 | `new-campaign-preflight.sh` | checks that staging before `campaign init`. Changes nothing. |
 | `unity.yaml` | live cluster profile |
@@ -23,7 +23,7 @@ FS license is **not** under the root: `/home/f006rq8_dartmouth_edu/license.txt`.
 
 ```bash
 unity-compute                             # compute node, NOT login
-source ~/devel/unity-campaign/env.sh
+source ~/devel/unity-campaign/site-env.sh
 ./setup.sh                                # stage
 ./new-campaign-preflight.sh               # verify, and print the init command
 
@@ -47,13 +47,13 @@ it.
 
 ### Three roots, three lifetimes
 
-`env.sh` exports all three; nothing else should hardcode them.
+`site-env.sh` exports all three; nothing else should hardcode them.
 
 | | Holds | Lifetime |
 |---|---|---|
 | `$HOME/devel` | this repo, `containers/` | survives everything. Only large thing here is the images, which are expensive to re-fetch |
 | `$SITE_ROOT` (PI space) | `tools/`, `templateflow/`, the campaign | wiped by hand when it fills |
-| `$SCRATCH_ROOT` (HPC workspace) | per-job working clones, `$JOB_TMP` | expires. `ws_allocate mechababs 30` once; `env.sh` warns in every shell as it nears expiry |
+| `$SCRATCH_ROOT` (HPC workspace) | per-job working clones, `$JOB_TMP` | expires. `ws_allocate mechababs 30` once; `site-env.sh` warns in every shell as it nears expiry |
 
 Per-job scratch is in the workspace rather than the PI space on purpose: the
 2026-08 shakeout kept it in the PI dir, ~36 concurrent jobs' working clones
