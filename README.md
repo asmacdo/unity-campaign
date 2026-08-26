@@ -15,7 +15,8 @@ FS license is **not** under the root: `/home/f006rq8_dartmouth_edu/license.txt`.
 | `env.sh` | source in **every** shell running git/datalad/babs/mechababs. The venv does not replace it. |
 | `setup.sh` | stages prereqs into the site root. Idempotent. |
 | `unity.yaml` | live cluster profile |
-| `pipelines/` | live pipeline configs (repo examples + site paths) |
+| `bids-app-configs/` | live app configs, study-first format (repo examples + site paths) |
+| `old-pipelines/` | the pre-study-first set, kept until the ported configs have a green run |
 
 ## Run
 
@@ -24,11 +25,16 @@ unity-compute                             # compute node, NOT login
 source ~/devel/unity-campaign/env.sh
 ./setup.sh
 
-bootstrap.sh <campaign>
-source <campaign>/.venv/bin/activate
-mechababs configure --cluster ~/devel/unity-campaign/unity.yaml \
-                    --pipelines ~/devel/unity-campaign/pipelines/...
+# from the STUDY root; campaign init replaces bootstrap.sh + configure
+uvx --from git+https://github.com/con/mechababs@study-first-rewrite mechababs campaign init <label> \
+    --cluster ~/unity-campaign/unity.yaml \
+    --apps ~/unity-campaign/bids-app-configs/MRIQC-24.0.2.yaml
+source .mechababs/campaigns/<label>/env.sh
 ```
+
+The configs are named by **path** and copied into the campaign, so this repo stays
+the place the real site paths live. The `@study-first-rewrite` ref is the feature
+branch — it becomes a release tag once con/mechababs#114 merges.
 
 Long runs under `tmux`.
 

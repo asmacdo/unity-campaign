@@ -105,7 +105,8 @@ git --version   # jobs need >= 2.25 for sparse-checkout
 cat <<EOF
 
 Done. Next:
-  source $(pwd)/env.sh          # in every shell, including before bootstrap
-  bootstrap.sh <campaign>       # on a compute node
-  mechababs configure --cluster $(pwd)/unity.yaml --pipelines $(pwd)/pipelines/...
+  source $(pwd)/env.sh          # in every shell, including before campaign init
+  # from the STUDY root, on a compute node:
+  uvx --from git+https://github.com/con/mechababs@study-first-rewrite mechababs campaign init <label> \\
+      --cluster $(pwd)/unity.yaml --apps $(pwd)/bids-app-configs/MRIQC-24.0.2.yaml
 EOF

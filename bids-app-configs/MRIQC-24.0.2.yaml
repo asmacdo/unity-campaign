@@ -1,0 +1,70 @@
+# MRIQC on Unity — the live config. mechababs' own examples/ stay generic; this is
+# what actually runs, so the real site paths live here.
+
+mechababs:
+  # mechababs-only namespace: consumed by mechababs, stripped before the config
+  # reaches babs. selection = the scaffold-time subject-eligibility rule;
+  # container = which image to hand `babs init --container-ds/--container-name`.
+  selection:
+    require_datatypes: [anat]
+    require_positive: [t1w_num]
+  container:
+    # The shim rather than ReproNim/containers directly: native layout resolution
+    # needs babs with PennLINC/babs#399, which no release carries yet (latest is
+    # 0.5.4) and a campaign's default babs is the latest release. Swap the source
+    # to https://github.com/ReproNim/containers once a release carries it
+    # (con/mechababs#62).
+    #
+    # ABSOLUTE on purpose: a relative source resolves against the STUDY root, and
+    # the shim is a site-wide checkout, not a sibling of any one study.
+    source: /work/pi_d31548v_dartmouth_edu/asmacdo/repronim-containers-shim
+    name: bids-mriqc
+
+# BIDS-study layout (babs#369): the babs project root IS the analysis dataset, so
+# the derivative dir is itself a valid BIDS dataset. The RIA stores go under
+# .babs/ rather than babs's default top-level input_ria/output_ria, which would
+# sit at the dataset's top level. Passed straight through to babs.
+analysis_path: "."
+input_ria_path: ".babs/input_ria"
+output_ria_path: ".babs/output_ria"
+
+bids_app_args:
+  --no-datalad-get: ""
+  $SUBJECT_SELECTION_FLAG: "--participant-label"
+  # babs expands this exact token to "${PWD}/.git/tmp/wkdir" — the same directory
+  # a relative -w named, but absolute, so the --pwd fixup that used to compensate
+  # for the relative form is gone (con/mechababs#81).
+  -w: "$BABS_TMPDIR"
+  --n_cpus: "4"
+  --mem_gb: "16"
+  -vv: ""
+  --no-sub: ""
+
+singularity_args:
+  - --containall
+  # Route the container's /tmp to real scratch disk. $JOB_TMP is created and
+  # trap-cleaned by the cluster config's script_preamble.
+  - -B $JOB_TMP:/tmp
+  # mriqc pulls MNI152NLin2009cAsym for its anatomical IQM workflow; bind the
+  # pre-populated cache so it needs no writable download target.
+  - -B /work/pi_d31548v_dartmouth_edu/asmacdo/templateflow:/templateflow
+  - --env TEMPLATEFLOW_HOME=/templateflow
+
+# TODO: partition/nodes/ntasks belong on the cluster axis, not here — the cluster
+# sets limits, the app sets minimums, and dataset chunk size informs the request
+# (con/mechababs#3, #97).
+cluster_resources:
+  interpreting_shell: "/bin/bash"
+  hard_runtime_limit: "24:00:00"
+  # 40G rather than 24G: the 2026-08 Unity shakeout OOM'd synthstrip at 24G. The
+  # bump fixed most of those jobs; one session still exceeded 40G, so this is a
+  # floor that is known to work, not a proven ceiling.
+  customized_text: |
+    #SBATCH --cpus-per-task=4
+    #SBATCH --mem=40G
+    #SBATCH --nodes=1
+    #SBATCH --ntasks=1
+
+all_results_in_one_zip: true
+zip_foldernames:
+  mriqc: "24-0-2"
