@@ -84,12 +84,15 @@ for t in "${TEMPLATES[@]}"; do
     datalad get -d "$TEMPLATEFLOW_DIR" -r "$TEMPLATEFLOW_DIR/tpl-$t"
 done
 
-say "ReproNim/containers -> $SITE_ROOT/containers"
+say "ReproNim/containers -> $CONTAINERS_DIR"
 # A plain clone, no shim: babs carrying PennLINC/babs#399 resolves the image out
 # of the datalad-containers registration, so nothing has to re-register the
 # images at babs' own hardcoded path any more. The campaign must pin babs by git
 # ref for that -- no release carries #399.
-CONTAINERS="$SITE_ROOT/containers"
+# The images are large (fmriprep alone is ~10-15 GB) and $HOME is quota'd, so
+# `df -h ~` is worth a look on a new account. On this one it is 100G, ample.
+CONTAINERS="$CONTAINERS_DIR"
+mkdir -p "$(dirname "$CONTAINERS")"
 if [ -d "$CONTAINERS/.datalad" ]; then
     echo "clone already present"
 else

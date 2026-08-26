@@ -88,7 +88,7 @@ fi
 echo
 echo "== staged inputs"
 
-containers="$SITE_ROOT/containers"
+containers="${CONTAINERS_DIR:-$HOME/devel/containers}"
 if [ -d "$containers/.datalad" ]; then
     pass "ReproNim/containers clone: $containers"
     for name in bids-mriqc bids-fmriprep; do

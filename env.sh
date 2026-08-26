@@ -13,8 +13,14 @@
 # Activating a campaign venv does NOT do any of this.
 
 # ---------------------------------------------------------------- persistent --
-# Campaign, tools, templateflow, container shim. Quota'd; survives a job.
+# Campaign, tools, templateflow. Quota'd; survives a job, but IS wiped by hand
+# when it fills up, so nothing expensive to re-fetch should live here.
 export SITE_ROOT=/work/pi_d31548v_dartmouth_edu/asmacdo
+
+# The container images, deliberately in $HOME on a different filesystem: they
+# are expensive to re-fetch and must outlive a PI-space wipe. $HOME is quota'd,
+# so this is the only large thing that belongs here.
+export CONTAINERS_DIR="$HOME/devel/containers"
 export FS_LICENSE_FILE=/home/f006rq8_dartmouth_edu/license.txt
 
 # ----------------------------------------------------------------- ephemeral --

@@ -23,15 +23,15 @@ FS license is **not** under the root: `/home/f006rq8_dartmouth_edu/license.txt`.
 
 ```bash
 unity-compute                             # compute node, NOT login
-source ~/unity-campaign/env.sh
+source ~/devel/unity-campaign/env.sh
 ./setup.sh                                # stage
 ./new-campaign-preflight.sh               # verify, and print the init command
 
 # from the STUDY root; campaign init replaces bootstrap.sh + configure
 uvx --from git+https://github.com/con/mechababs@study-first-rewrite mechababs campaign init <label> \
     --babs https://github.com/PennLINC/babs.git@main \
-    --cluster ~/unity-campaign/unity.yaml \
-    --apps ~/unity-campaign/bids-app-configs/MRIQC-24.0.2.yaml
+    --cluster ~/devel/unity-campaign/unity.yaml \
+    --apps ~/devel/unity-campaign/bids-app-configs/MRIQC-24.0.2.yaml
 source .mechababs/campaigns/<label>/env.sh
 ```
 
@@ -45,8 +45,19 @@ old to use here anyway. Bare `main` is enough for MRIQC; real fmriprep runs want
 a working branch carrying `PennLINC/babs#395` and `PennLINC/babs#393` on top of
 it.
 
-Per-job scratch lives in an HPC workspace, not the PI space — `ws_allocate
-mechababs 30` once, and `env.sh` warns in every shell as it nears expiry.
+### Three roots, three lifetimes
+
+`env.sh` exports all three; nothing else should hardcode them.
+
+| | Holds | Lifetime |
+|---|---|---|
+| `$HOME/devel` | this repo, `containers/` | survives everything. Only large thing here is the images, which are expensive to re-fetch |
+| `$SITE_ROOT` (PI space) | `tools/`, `templateflow/`, the campaign | wiped by hand when it fills |
+| `$SCRATCH_ROOT` (HPC workspace) | per-job working clones, `$JOB_TMP` | expires. `ws_allocate mechababs 30` once; `env.sh` warns in every shell as it nears expiry |
+
+Per-job scratch is in the workspace rather than the PI space on purpose: the
+2026-08 shakeout kept it in the PI dir, ~36 concurrent jobs' working clones
+filled that quota, and jobs died on `Errno 122`.
 
 Long runs under `tmux`.
 
