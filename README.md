@@ -65,6 +65,13 @@ Per-job scratch is in the workspace rather than the PI space on purpose: the
 2026-08 shakeout kept it in the PI dir, ~36 concurrent jobs' working clones
 filled that quota, and jobs died on `Errno 122`.
 
+**Scratch is kept ephemeral: `ws_release mechababs` when a run is done.** So
+nothing a run is meant to *produce* may live there — only what a job needs while
+it is running. Durable artifacts (duct logs in `$SITE_ROOT/duct-logs/`, extracted results, anything you
+would hand to someone) go under `$SITE_ROOT`. Before releasing, check
+`$SCRATCH_ROOT/job-compute` for a failed job's working clone you still want to
+read.
+
 Long runs under `tmux`.
 
 ## Gotchas
