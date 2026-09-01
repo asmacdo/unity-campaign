@@ -5,6 +5,11 @@ mechababs:
   selection:
     require_datatypes: [anat, func]
     require_positive: [t1w_num, bold_num]
+  # The orchestration edge, mechababs-owned and separate from babs's
+  # `input_datasets` below: this names the producer by STEM so the cell is not
+  # scaffolded until that producer's cell has merged. ORDERING ONLY — the input
+  # wiring is `input_datasets`.
+  depends_on: fMRIPrep-25.2.5+anat
   container:
     # A plain ReproNim/containers clone — no shim. babs resolves the image out of
     # the datalad-containers registration (images/bids/bids-fmriprep--25.2.5.sif) rather than
@@ -29,8 +34,7 @@ analysis_path: "."
 input_ria_path: ".babs/input_ria"
 output_ria_path: ".babs/output_ria"
 
-# fmriprep --level minimal, run directly from raw (unchained: fmriprep does its
-# own anatomical processing, FreeSurfer included, inside this one derivative).
+# fmriprep --level minimal, chained on anat-only output.
 # Produces only what's needed for downstream tools: BOLD reference
 # (hmc + coreg boldrefs), brain masks, HMC and BOLD->T1w coregistration
 # transforms, SDC prep (if the data has fieldmaps). Does NOT resample
@@ -40,8 +44,8 @@ output_ria_path: ".babs/output_ria"
 # The output is the cheapest viable starting point for someone who
 # wants to do their own resampling.
 #
-# The staged/chained form of this pipeline (anat -> minimal -> full, wired via
-# depends_on + input_datasets) lives in fmriprep-chain/.
+# Pair-runs with fMRIPrep-25.2.5+full.yaml off the same anat
+# scaffold so we can compare the two outputs directly.
 bids_app_args:
   $SUBJECT_SELECTION_FLAG: "--participant-label"
   # babs expands this exact token to "${PWD}/.git/tmp/wkdir" — the same directory
@@ -62,6 +66,17 @@ bids_app_args:
   --stop-on-first-crash: ""
   # HOST path; BABS rewrites to /SGLR/FREESURFER_HOME/license.txt.
   --fs-license-file: "/home/f006rq8_dartmouth_edu/license.txt"
+  # Path inside the unzipped fMRIPrep-25.2.5+anat input. The double nesting
+  # is real: path_in_babs is sourcedata/fMRIPrep-25.2.5+anat, and the zip's
+  # top folder is also fMRIPrep-25.2.5+anat/.
+  --fs-subjects-dir: '"${PWD}"/sourcedata/fMRIPrep-25.2.5+anat/fMRIPrep-25.2.5+anat/sourcedata/freesurfer'
+  # Reuse the anat stage's precomputed derivatives (fmriprep --derivatives
+  # PACKAGE=PATH) so the anatomical set is taken from anat's output rather than
+  # recomputed. Same input mount as --fs-subjects-dir above, minus the
+  # /sourcedata/freesurfer tail: this points at the anat derivative root
+  # (sub-*/anat + dataset_description.json). --fs-subjects-dir stays — FreeSurfer
+  # reuse is a separate mechanism.
+  --derivatives: 'anat="${PWD}"/sourcedata/fMRIPrep-25.2.5+anat/fMRIPrep-25.2.5+anat'
   --nprocs: "4"
   --omp-nthreads: "2"
   --mem-mb: "32000"
@@ -71,6 +86,19 @@ singularity_args:
   - -B $JOB_TMP:/tmp
   - -B /work/pi_d31548v_dartmouth_edu/asmacdo/templateflow:/templateflow
   - --env TEMPLATEFLOW_HOME=/templateflow
+
+# Chained input: the anat-only stage's output. The key names WHICH upstream
+# by matching the producing pipeline's short_name (fMRIPrep-25.2.5+anat); that
+# name match is how iterate assembles the chain. origin_url is intentionally
+# omitted — the upstream RIA doesn't exist until anat has run + merged, so
+# iterate resolves it per run and injects it at scaffold (a per-run absolute RIA
+# path, not a config constant).
+input_datasets:
+  fMRIPrep-25.2.5+anat:
+    required_files:
+      - "*fMRIPrep-25.2.5+anat*.zip"
+    is_zipped: true
+    path_in_babs: sourcedata/fMRIPrep-25.2.5+anat
 
 cluster_resources:
   interpreting_shell: "/bin/bash"
