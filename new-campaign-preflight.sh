@@ -131,13 +131,14 @@ fi
 cat <<EOF
 Ready. From the STUDY root:
 
-  uvx --from git+https://github.com/con/mechababs@study-first-rewrite \\
+  uvx --from git+https://github.com/con/mechababs@main \\
       mechababs campaign init <label> \\
-      --babs https://github.com/PennLINC/babs.git@main \\
+      --babs https://github.com/asmacdo/babs.git@c4-duct \\
       --cluster $SELF_DIR/unity.yaml \\
       --apps $SELF_DIR/bids-app-configs/MRIQC-24.0.2.yaml
 
 --babs is not optional: the released babs predates PennLINC/babs#399, so it
-cannot resolve images out of ReproNim/containers. Real fmriprep runs want a
-working branch carrying #395 and #393 on top of main instead of bare main.
+cannot resolve images out of ReproNim/containers. asmacdo/babs@c4-duct is the
+current working branch (main + PennLINC/babs#412 + duct-wrap); bare
+PennLINC/babs@main covers MRIQC only.
 EOF
