@@ -44,10 +44,13 @@ output_ria_path: ".babs/output_ria"
 # depends_on + input_datasets) lives in fmriprep-chain/.
 bids_app_args:
   $SUBJECT_SELECTION_FLAG: "--participant-label"
-  # babs expands this exact token to "${PWD}/.git/tmp/wkdir" — the same directory
-  # a relative -w named, but absolute, so the --pwd fixup that used to compensate
-  # for the relative form is gone (con/mechababs#81).
-  -w: "$BABS_TMPDIR"
+  # The nipype workdir goes under the container's /tmp, which the cluster config
+  # binds to the per-job $JOB_TMP. Not "$BABS_TMPDIR" (= "${PWD}/.git/tmp/wkdir"
+  # under the job's scratch clone): with the workspace scratch root plus a
+  # session-level job name that path reaches ~234 characters, and FreeSurfer's
+  # mris_expand overflows a fixed filename buffer and aborts the anat workflow
+  # (con/mechababs#150, reproduced off-cluster). /tmp/wkdir keeps it near 115.
+  -w: "/tmp/wkdir"
   --level: "minimal"
   --output-spaces: "MNI152NLin2009cAsym:res-2:res-native MNI152NLin6Asym:res-2:res-native fsaverage"
   --cifti-output: "91k"
