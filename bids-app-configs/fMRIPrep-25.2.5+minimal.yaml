@@ -65,7 +65,7 @@ bids_app_args:
   --stop-on-first-crash: ""
   # HOST path; BABS rewrites to /SGLR/FREESURFER_HOME/license.txt.
   --fs-license-file: "/home/f006rq8_dartmouth_edu/license.txt"
-  --nprocs: "4"
+  --nprocs: "8"
   --omp-nthreads: "2"
   --mem-mb: "32000"
 

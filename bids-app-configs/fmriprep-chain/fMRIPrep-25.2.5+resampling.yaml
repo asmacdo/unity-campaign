@@ -74,7 +74,7 @@ bids_app_args:
   # (sub-*/anat + dataset_description.json). --fs-subjects-dir stays — FreeSurfer
   # reuse is a separate mechanism.
   --derivatives: 'anat="${PWD}"/sourcedata/fMRIPrep-25.2.5+anat/fMRIPrep-25.2.5+anat'
-  --nprocs: "4"
+  --nprocs: "8"
   --omp-nthreads: "2"
   --mem-mb: "32000"
 
