@@ -1,27 +1,33 @@
 #!/usr/bin/env bash
-# Extract every babs-produced derivative archive in a campaign clone, in place.
+# Extract every babs-produced derivative archive in a study clone, in place.
 #
-# Per derivative: extract ALL its archives with --no-commit, then one save.
-# The flags follow the june-1 finalize.sh incantation, each for a reason:
+# Per derivative: ONE `datalad add-archive-content` call naming every archive,
+# which extracts them in order and commits once (datalad/datalad#7920; needs a
+# datalad that has `--overwrite-prior-check`, checked below). If any archive
+# fails, nothing is committed. Each flag is there for a reason:
 #
 #   --annex-options="--no-check-gitignore"
 #       babs gitignores `logs/` (its SLURM .o/.e), but fmriprep also writes a
 #       `logs/` dir (CITATION.md). Without this, git-annex refuses the file and
 #       the extraction aborts mid-archive, leaving the dataset dirty.
 #   --existing overwrite
-#       every subject's archive carries the same dataset_description.json and
+#       every subject's archive carries a dataset_description.json and
 #       logs/CITATION.md, so archive 2 collides with archive 1.
-#   --allow-dirty --no-commit
-#       archives are extracted back-to-back into one dataset; committing per
-#       archive would demand a clean tree between them.
+#   --overwrite-prior-check stats
+#       datalad refuses (by default) to let archive 2 overwrite a file archive 1
+#       added in the same call when the content differs, and it does differ:
+#       fmriprep's dataset_description.json carries the per-job scratch path in
+#       DatasetLinks.raw (con/mechababs#155). `stats` permits it and counts it
+#       as `overwritten prior`; the last archive's copy wins, as before.
 #   --strip-leading-dirs --leading-dirs-depth 1
 #       drops the archive's top folder so `sub-*` lands at the derivative root.
 #
-# Usage:  ./unzip-derivatives.sh [-n] [-D] [campaign_root]
+# Usage:  ./unzip-derivatives.sh [-n] [-D] [root]
 #           -n   dry run -- print what would be extracted, change nothing
-#           -D   delete each archive after extracting it (june-1 did this;
-#                saves ~12 GB, but the archive no longer sits beside its
-#                extracted content)
+#           -D   delete each archive after extracting it (saves the archive's
+#                size, but it no longer sits beside its extracted content)
+#           root a superstudy (<member>/derivatives/*), a study (derivatives/*),
+#                or a single derivative; default: the current directory
 #
 # Run AFTER content is present (`datalad get` the derivatives first).
 
@@ -39,19 +45,32 @@ done
 root="${1:-$PWD}"
 cd "$root"
 
+if ! datalad add-archive-content --help 2>/dev/null | grep -q -- '--overwrite-prior-check'; then
+    echo "datalad on PATH ($(datalad --version 2>/dev/null)) predates multi-archive add-archive-content (datalad/datalad#7920)" >&2
+    exit 1
+fi
+
 shopt -s nullglob
 derivs=()
-for d in studies/*/derivatives/*/; do
-    archives=( "$d"*.zip )
+# the root is a derivative itself, a study, or a superstudy of studies
+if compgen -G "*.zip" >/dev/null; then
+    candidates=( . )
+elif [ -d derivatives ]; then
+    candidates=( derivatives/*/ )
+else
+    candidates=( */derivatives/*/ )
+fi
+for d in "${candidates[@]}"; do
+    archives=( "${d%/}"/*.zip )
     [ ${#archives[@]} -gt 0 ] && derivs+=( "${d%/}" )
 done
 
 if [ ${#derivs[@]} -eq 0 ]; then
-    echo "no derivatives with archives under $root/studies/*/derivatives/" >&2
+    echo "no derivatives with archives under $root" >&2
     exit 1
 fi
 
-echo "campaign:    $root"
+echo "root:        $root"
 echo "derivatives: ${#derivs[@]}"
 [ -n "$delete" ] && echo "mode:        DELETING archives after extraction"
 echo
@@ -86,30 +105,21 @@ for deriv in "${derivs[@]}"; do
         continue
     fi
 
-    ok=1
+    names=()
     for a in "${archives[@]}"; do
-        name="$(basename "$a")"
-        echo "         + $name"
-        if ! ( cd "$deriv" && datalad add-archive-content \
-                    -d . $delete --allow-dirty --no-commit \
-                    --existing overwrite \
-                    --strip-leading-dirs --leading-dirs-depth 1 \
-                    --annex-options="--no-check-gitignore" \
-                    "$name" ); then
-            echo "FAILED   $deriv :: $name" >&2
-            failed+=("$deriv :: $name")
-            ok=0
-            break
-        fi
+        names+=( "$(basename "$a")" )
+        echo "         + ${names[-1]}"
     done
-
-    if [ "$ok" -eq 1 ]; then
-        if ( cd "$deriv" && datalad save -m "extract archive content" ); then
-            done_=$((done_ + 1))
-        else
-            echo "FAILED   $deriv :: save" >&2
-            failed+=("$deriv :: save")
-        fi
+    if ( cd "$deriv" && datalad add-archive-content \
+                -d . $delete \
+                --existing overwrite --overwrite-prior-check stats \
+                --strip-leading-dirs --leading-dirs-depth 1 \
+                --annex-options="--no-check-gitignore" \
+                "${names[@]}" ); then
+        done_=$((done_ + 1))
+    else
+        echo "FAILED   $deriv  (nothing committed)" >&2
+        failed+=("$deriv")
     fi
 done
 
