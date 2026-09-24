@@ -1,0 +1,96 @@
+mechababs:
+  # mechababs-only config: consumed by mechababs, stripped by merge_config so none
+  # of it reaches the babs config. selection = deploy-time subject-eligibility rule;
+  # container = which image to vendor + pass to `babs init --container-ds/--container-name`.
+  selection:
+    require_datatypes: [anat, func]
+    require_positive: [t1w_num, bold_num]
+  container:
+    # A plain ReproNim/containers clone — no shim. babs resolves the image out of
+    # the datalad-containers registration (images/bids/bids-fmriprep--25.2.5.sif) rather than
+    # its own hardcoded layout, which needs babs carrying PennLINC/babs#399:
+    # merged upstream, in no release yet, so the campaign pins babs by git ref
+    # instead of taking the released default.
+    #
+    # In $HOME, not the PI space: the PI dir gets wiped, and re-fetching the
+    # images every time is expensive. Absolute and local on purpose — a relative
+    # source resolves against the STUDY root, and babs installs this dataset into
+    # every derivative it inits, so a URL would pay a fresh clone per cell.
+    source: /home/f006rq8_dartmouth_edu/devel/containers
+    name: bids-fmriprep
+
+# BIDS-study layout (babs#369): the babs project root IS the analysis dataset,
+# and the RIA stores go under .babs/ — babs's default top-level input_ria/output_ria
+# would break datalad's nesting of the (untracked) babs project inside the study.
+# Campaign-wide layout choice, living per-pipeline for now (see config-composition-axes);
+# MUST match across every pipeline in a campaign. merge_config passes these straight
+# into the babs config.
+analysis_path: "."
+input_ria_path: ".babs/input_ria"
+output_ria_path: ".babs/output_ria"
+
+# fmriprep --level minimal, run directly from raw (unchained: fmriprep does its
+# own anatomical processing, FreeSurfer included, inside this one derivative).
+# Produces only what's needed for downstream tools: BOLD reference
+# (hmc + coreg boldrefs), brain masks, HMC and BOLD->T1w coregistration
+# transforms, SDC prep (if the data has fieldmaps). Does NOT resample
+# BOLD to standard spaces, does NOT produce CIFTI, and does NOT emit
+# confounds (those come out of --level full; verified by inspecting a
+# real minimal derivative's func/ -- no desc-confounds_timeseries.tsv).
+# The output is the cheapest viable starting point for someone who
+# wants to do their own resampling.
+#
+# The staged/chained form of this pipeline (anat -> minimal -> full, wired via
+# depends_on + input_datasets) lives in fmriprep-chain/.
+bids_app_args:
+  $SUBJECT_SELECTION_FLAG: "--participant-label"
+  # The nipype workdir goes under the container's /tmp, which the cluster config
+  # binds to the per-job $JOB_TMP. Not "$BABS_TMPDIR" (= "${PWD}/.git/tmp/wkdir"
+  # under the job's scratch clone): with the workspace scratch root plus a
+  # session-level job name that path reaches ~234 characters, and FreeSurfer's
+  # mris_expand overflows a fixed filename buffer and aborts the anat workflow
+  # (con/mechababs#150, reproduced off-cluster). /tmp/wkdir keeps it near 115.
+  -w: "/tmp/wkdir"
+  --level: "minimal"
+  --output-spaces: "MNI152NLin2009cAsym:res-2:res-native MNI152NLin6Asym:res-2:res-native fsaverage"
+  --cifti-output: "91k"
+  --random-seed: "12345"
+  --skull-strip-fixed-seed: ""
+  --skull-strip-t1w: "force"
+  --use-syn-sdc: "warn"
+  --me-output-echos: ""
+  --notrack: ""
+  --md-only-boilerplate: ""
+  --skip-bids-validation: ""
+  --stop-on-first-crash: ""
+  # HOST path; BABS rewrites to /SGLR/FREESURFER_HOME/license.txt.
+  --fs-license-file: "/home/f006rq8_dartmouth_edu/license.txt"
+  --nprocs: "2"
+  --omp-nthreads: "2"
+  --mem-mb: "32000"
+
+singularity_args:
+  - --containall
+  - -B $JOB_TMP:/tmp
+  - -B /work/pi_d31548v_dartmouth_edu/asmacdo/templateflow:/templateflow
+  - --env TEMPLATEFLOW_HOME=/templateflow
+
+cluster_resources:
+  interpreting_shell: "/bin/bash"
+  hard_runtime_limit: "48:00:00"
+  # Discovery doesn't track per-node TmpDisk in slurm (all nodes
+  # report TmpDisk=0), so --tmp=anything is rejected as unsatisfiable.
+  # We bind ${JOB_TMP} to /tmp inside the container instead.
+  # temporary_disk_space: 200G
+  customized_text: |
+    #SBATCH --cpus-per-task=2
+    #SBATCH --mem=40G
+    #SBATCH --nodes=1
+    #SBATCH --ntasks=1
+
+all_results_in_one_zip: true
+zip_foldernames:
+  # Key == this pipeline's short_name (filename stem). It names the output folder
+  # the app writes into and that babs zips, AND is the handle a downstream stage
+  # matches to chain onto this output (its input_datasets key == this key).
+  fMRIPrep-25.2.5+minimal: "25-2-5"
