@@ -105,4 +105,4 @@ all_results_in_one_zip: true
 zip_foldernames:
   # Key == this pipeline's short_name (filename stem); it names the output folder
   # the app writes into and that babs zips.
-  fMRIPrep-25.2.5+full: "25-2-5"
+  fMRIPrep-25.2.5+chained-full: "25-2-5"

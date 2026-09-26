@@ -91,5 +91,5 @@ zip_foldernames:
   # Key == this pipeline's short_name (filename stem). It names the output
   # folder babs zips AND is the handle a downstream stage matches to chain onto
   # this output (its input_datasets key == this key). One name, so the chain
-  # self-assembles by name (see fMRIPrep-25.2.5+minimal.yaml).
+  # self-assembles by name (see fMRIPrep-25.2.5+chained-minimal.yaml).
   fMRIPrep-25.2.5+anat: "25-2-5"

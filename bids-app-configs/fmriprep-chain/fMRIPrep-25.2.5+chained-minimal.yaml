@@ -44,7 +44,7 @@ output_ria_path: ".babs/output_ria"
 # The output is the cheapest viable starting point for someone who
 # wants to do their own resampling.
 #
-# Pair-runs with fMRIPrep-25.2.5+full.yaml off the same anat
+# Pair-runs with fMRIPrep-25.2.5+chained-full.yaml off the same anat
 # scaffold so we can compare the two outputs directly.
 bids_app_args:
   $SUBJECT_SELECTION_FLAG: "--participant-label"
@@ -118,4 +118,4 @@ zip_foldernames:
   # Key == this pipeline's short_name (filename stem). It names the output folder
   # the app writes into and that babs zips, AND is the handle a downstream stage
   # matches to chain onto this output (its input_datasets key == this key).
-  fMRIPrep-25.2.5+minimal: "25-2-5"
+  fMRIPrep-25.2.5+chained-minimal: "25-2-5"
