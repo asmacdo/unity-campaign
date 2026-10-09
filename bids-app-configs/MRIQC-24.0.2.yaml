@@ -41,16 +41,29 @@ bids_app_args:
   --mem_gb: "16"
   -vv: ""
   --no-sub: ""
+  # T1w only while `templateflow.required` covers only the anatomical IQMs; drop
+  # once the dry run with BOLD has extended the list.
+  -m: "T1w"
 
 singularity_args:
   - --containall
   # Route the container's /tmp to real scratch disk. $JOB_TMP is created and
   # trap-cleaned by the cluster config's script_preamble.
   - -B $JOB_TMP:/tmp
-  # mriqc pulls MNI152NLin2009cAsym for its anatomical IQM workflow; bind the
-  # pre-populated cache so it needs no writable download target.
-  - -B /work/pi_d31548v_dartmouth_edu/asmacdo/templateflow:/templateflow
-  - --env TEMPLATEFLOW_HOME=/templateflow
+
+# Templateflow as a pinned subdataset of the derivative (babs branch
+# templateflow-subdataset): each job fetches exactly `required` and records it as a
+# `datalad run` input; the App sees it read-only. `required` comes from a dry run of
+# MRIQC 24.0.2 with these arguments (see babs docs, "Finding the required list").
+templateflow:
+  url: "https://github.com/templateflow/templateflow.git"
+  required:
+    # anatomical IQMs (dry run 2026-10-09, -m T1w)
+    - "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_label-CSF_probseg.nii.gz"
+    - "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_label-GM_probseg.nii.gz"
+    - "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_label-WM_probseg.nii.gz"
+    - "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-02_desc-brain_mask.nii.gz"
+    - "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-02_T1w.nii.gz"
 
 # TODO: partition/nodes/ntasks belong on the cluster axis, not here — the cluster
 # sets limits, the app sets minimums, and dataset chunk size informs the request
