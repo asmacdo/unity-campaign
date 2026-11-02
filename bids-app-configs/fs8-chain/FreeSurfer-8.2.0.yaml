@@ -63,12 +63,13 @@ singularity_args:
 
 cluster_resources:
   interpreting_shell: "/bin/bash"
-  # FreeSurfer 8 recon-all is unmeasured here; generous on purpose, tighten from
-  # the duct actuals.
+  # First actuals (typhon, straight singularity, ds000030 sub-10159, n = 1,
+  # 2026-11-02): wall 1 h 32 m, peak RSS 31.8 GB, CPU peak 392 % despite
+  # --n_cpus 2. 32G would sit at the limit, so 48G; walltime left generous.
   hard_runtime_limit: "2-00:00:00"
   customized_text: |
     #SBATCH --cpus-per-task=2
-    #SBATCH --mem=32G
+    #SBATCH --mem=48G
     #SBATCH --nodes=1
     #SBATCH --ntasks=1
 
