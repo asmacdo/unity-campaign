@@ -39,6 +39,11 @@ bids_app_args:
   # done. Per-dataset from MagneticFieldStrength would be the refinement; untested
   # either way.
   --3T: "false"
+  # DECIDED 2026-11-02, uncertain: the app default, T2. Refines the pial surface
+  # with a T2w of ~1.2 mm or finer when the subject has one, else T1 alone.
+  # fMRIPrep also uses T2w/FLAIR by default (--ignore t2w/flair exist), but
+  # exactly how it uses them is unverified, so whether this matches is unknown.
+  --refine_pial: "T2"
   # Default auto: -hires only for sub-mm data, as fMRIPrep's --submm-recon default.
   --hires_mode: "auto"
   --skip_bids_validator: ""
