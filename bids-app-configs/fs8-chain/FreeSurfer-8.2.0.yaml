@@ -1,0 +1,67 @@
+mechababs:
+  # Stage 1 of the FS8 -> fMRIPrep resampling -> full chain (hub workdoc fs8-chain).
+  # FreeSurfer runs here, as its own stage; the fMRIPrep stages reuse this recon
+  # instead of running their own.
+  selection:
+    require_datatypes: [anat]
+    require_positive: [t1w_num]
+  container:
+    # bids-apps/freesurfer#100 build (docker://bids/freesurfer:8.2.0-unstable),
+    # registered in ReproNim/containers as bids-freesurfer ->
+    # images/bids/bids-freesurfer--8.2.0-unstable.sif. Not the neurodesk image.
+    source: /home/f006rq8_dartmouth_edu/devel/containers
+    name: bids-freesurfer
+
+# Same layout as every other config in a campaign (must match across pipelines).
+analysis_path: "."
+input_ria_path: ".babs/input_ria"
+output_ria_path: ".babs/output_ria"
+
+# The bids-apps/freesurfer CLI (run.py), not fMRIPrep's: underscored flags.
+#
+# FreeSurfer-then-reuse means fMRIPrep reuses a plain recon-all, not its own
+# flavour: fMRIPrep's internal recon (read from c6's recon-all.log) skips
+# FreeSurfer's skull strip for its own, never passes -3T, and runs most surface
+# steps itself. This app uses FreeSurfer's own skull strip, and feeds recon-all
+# every T1w where fMRIPrep's default (first-lex) uses the first.
+bids_app_args:
+  $SUBJECT_SELECTION_FLAG: "--participant_label"
+  # Sessions are NOT handled yet. The app's default (--multiple_sessions
+  # longitudinal) names subjects sub-X_ses-Y plus a base and .long. dirs; fMRIPrep
+  # looks for sub-X (which name it wants at session level is unchecked).
+  # Subject-level jobs want --multiple_sessions multiday (one sub-X from all
+  # sessions); session-level jobs want $SESSION_SELECTION_FLAG "--session_label"
+  # plus --steps cross-sectional (sub-X_ses-Y). One config cannot carry both, so
+  # the first runs are on datasets without sessions (ds000030), where neither applies.
+  # Default auto: -hires only for sub-mm data, as fMRIPrep's --submm-recon default.
+  --hires_mode: "auto"
+  --skip_bids_validator: ""
+  --n_cpus: "2"
+  # babs binds the FreeSurfer license only for a key spelled --fs-license-file
+  # (generate_bidsapp_runscript.py), which this app does not take. So the license
+  # is bound by hand in singularity_args and the app is pointed at it here.
+  # TODO: babs issue, not filed (fMRIPrep's flag name hardcoded); related:
+  # con/mechababs#29 (license + templateflow binds portable).
+  --license_file: "/fs-license.txt"
+
+singularity_args:
+  - --containall
+  - -B $JOB_TMP:/tmp
+  # HOST path, bound by hand (see --license_file above).
+  - -B /home/f006rq8_dartmouth_edu/license.txt:/fs-license.txt
+
+cluster_resources:
+  interpreting_shell: "/bin/bash"
+  # FreeSurfer 8 recon-all is unmeasured here; generous on purpose, tighten from
+  # the duct actuals.
+  hard_runtime_limit: "2-00:00:00"
+  customized_text: |
+    #SBATCH --cpus-per-task=2
+    #SBATCH --mem=32G
+    #SBATCH --nodes=1
+    #SBATCH --ntasks=1
+
+all_results_in_one_zip: true
+zip_foldernames:
+  # Key == this pipeline's short_name (filename stem).
+  FreeSurfer-8.2.0: "8-2-0"
