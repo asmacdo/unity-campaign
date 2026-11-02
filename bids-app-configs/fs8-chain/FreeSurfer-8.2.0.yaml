@@ -33,6 +33,12 @@ bids_app_args:
   # sessions); session-level jobs want $SESSION_SELECTION_FLAG "--session_label"
   # plus --steps cross-sectional (sub-X_ses-Y). One config cannot carry both, so
   # the first runs are on datasets without sessions (ds000030), where neither applies.
+  # DECIDED 2026-11-02, uncertain: off. The app defaults it on whatever the field
+  # strength, and OpenNeuro is not all 3T. fMRIPrep never passes -3T (it does its
+  # own N4 bias correction first), so off also matches what fMRIPrep would have
+  # done. Per-dataset from MagneticFieldStrength would be the refinement; untested
+  # either way.
+  --3T: "false"
   # Default auto: -hires only for sub-mm data, as fMRIPrep's --submm-recon default.
   --hires_mode: "auto"
   --skip_bids_validator: ""
