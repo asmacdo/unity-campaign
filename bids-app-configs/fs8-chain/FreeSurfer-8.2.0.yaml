@@ -6,11 +6,14 @@ mechababs:
     require_datatypes: [anat]
     require_positive: [t1w_num]
   container:
-    # bids-apps/freesurfer#100 build (docker://bids/freesurfer:8.2.0-unstable),
-    # registered in ReproNim/containers as bids-freesurfer ->
-    # images/bids/bids-freesurfer--8.2.0-unstable.sif. Not the neurodesk image.
+    # bids-apps/freesurfer#100 build (docker://bids/freesurfer:8.2.0-unstable,
+    # ReproNim/containers bids-freesurfer) with run.py from asmacdo/bids-app-freesurfer
+    # @2b1000b (the bids-apps/freesurfer#105 fix) layered on, built on Unity by
+    # build-fs8-patched-image.sh and registered in this local clone only as
+    # bids-freesurfer-fs105 -> images/bids/bids-freesurfer--8.2.0-unstable+fs105-2b1000b.sif.
+    # Back to the upstream image once #105 merges and is built. Not the neurodesk image.
     source: /home/f006rq8_dartmouth_edu/devel/containers
-    name: bids-freesurfer
+    name: bids-freesurfer-fs105
 
 # Same layout as every other config in a campaign (must match across pipelines).
 analysis_path: "."
@@ -26,13 +29,20 @@ output_ria_path: ".babs/output_ria"
 # every T1w where fMRIPrep's default (first-lex) uses the first.
 bids_app_args:
   $SUBJECT_SELECTION_FLAG: "--participant_label"
-  # Sessions are NOT handled yet. The app's default (--multiple_sessions
-  # longitudinal) names subjects sub-X_ses-Y plus a base and .long. dirs; fMRIPrep
-  # looks for sub-X (which name it wants at session level is unchecked).
-  # Subject-level jobs want --multiple_sessions multiday (one sub-X from all
-  # sessions); session-level jobs want $SESSION_SELECTION_FLAG "--session_label"
-  # plus --steps cross-sectional (sub-X_ses-Y). One config cannot carry both, so
-  # the first runs are on datasets without sessions (ds000030), where neither applies.
+  # One config for every dataset shape: a session-level job is one session,
+  # reconstructed on its own (cross-sectional), named sub-X_ses-Y; a subject-level
+  # job (dataset without sessions) is sub-X. Needs babs passing this flag only at
+  # session level (PennLINC/babs#421) and the app naming a one-session run
+  # sub-X_ses-Y (bids-apps/freesurfer#105); both are fixes we carry until merged.
+  $SESSION_SELECTION_FLAG: "--session_label"
+  # A no-op for session-level jobs (a one-session clone takes the #105 path, which
+  # ignores --steps) and for datasets without sessions. It matters only for a
+  # subject-level job on a dataset with sessions, which sees every session: there
+  # the app's default is the longitudinal stream (each session, a base, each
+  # .long), and this makes it one cross-sectional sub-X_ses-Y per session instead,
+  # the same shape a session-level run gives. mechababs runs such a job only once
+  # con/mechababs#156's processing-level override exists; revisit then.
+  --steps: "cross-sectional"
   # DECIDED 2026-11-02, uncertain: off. The app defaults it on whatever the field
   # strength, and OpenNeuro is not all 3T. fMRIPrep never passes -3T (it does its
   # own N4 bias correction first), so off also matches what fMRIPrep would have
