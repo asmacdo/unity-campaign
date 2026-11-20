@@ -8,14 +8,15 @@ mechababs:
   container:
     # bids-apps/freesurfer#100 build (docker://bids/freesurfer:8.2.0-unstable,
     # ReproNim/containers bids-freesurfer) with run.py from asmacdo/bids-app-freesurfer
-    # @26e896c (branch fs8-image: the bids-apps/freesurfer#105 one-session naming fix
-    # + #108, which strips the sub-/ses- prefixes babs passes) layered on, built on
-    # Unity by build-fs8-patched-image.sh and registered in this local clone only as
-    # bids-freesurfer-fs105-fs108 ->
-    # images/bids/bids-freesurfer--8.2.0-unstable+fs105-fs108-26e896c.sif.
-    # Back to the upstream image once both merge and are built. Not the neurodesk image.
+    # @78b8af0 (branch fs8-image: the bids-apps/freesurfer#105 one-session naming fix
+    # via #111, #108, which strips the sub-/ses- prefixes babs passes, and #104,
+    # which copies fsaverage/EC_average instead of leaving dangling links that fail
+    # babs's zip step) layered on, built on Unity by build-fs8-patched-image.sh and
+    # registered in this local clone only as bids-freesurfer-fs104-fs105-fs108 ->
+    # images/bids/bids-freesurfer--8.2.0-unstable+fs104-fs105-fs108-78b8af0.sif.
+    # Back to the upstream image once all three merge and are built. Not the neurodesk image.
     source: /home/f006rq8_dartmouth_edu/devel/containers
-    name: bids-freesurfer-fs105-fs108
+    name: bids-freesurfer-fs104-fs105-fs108
 
 # Same layout as every other config in a campaign (must match across pipelines).
 analysis_path: "."
