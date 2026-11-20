@@ -72,6 +72,11 @@ bids_app_args:
 singularity_args:
   - --containall
   - -B $JOB_TMP:/tmp
+  # FS8 scripts (seg2cc, mri_vsinus_seg, ...) put temp files in /scratch whenever
+  # `-dw /scratch` passes, ignoring $TMPDIR. The image ships an empty /scratch, and
+  # rootless apptainer (Unity) shows it as ours on an rw-flagged overlay, so the
+  # test passes but writes fail (read-only). Bind real scratch over it.
+  - -B $JOB_TMP:/scratch
   # HOST path, bound by hand (see --license_file above).
   - -B /home/f006rq8_dartmouth_edu/license.txt:/fs-license.txt
 
