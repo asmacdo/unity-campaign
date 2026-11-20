@@ -88,6 +88,8 @@ cluster_resources:
   # --n_cpus 2. 32G would sit at the limit, so 48G; walltime left generous.
   hard_runtime_limit: "2-00:00:00"
   customized_text: |
+    # Unity's default partition is restricted to other accounts (2026-11-20), so name it.
+    #SBATCH --partition=cpu
     #SBATCH --cpus-per-task=2
     #SBATCH --mem=48G
     #SBATCH --nodes=1
