@@ -87,8 +87,11 @@ cluster_resources:
   # 2026-11-02): wall 1 h 32 m, peak RSS 31.8 GB, CPU peak 392 % despite
   # --n_cpus 2. 32G would sit at the limit, so 48G; walltime left generous.
   hard_runtime_limit: "2-00:00:00"
+  # Unity's default partition is restricted to other accounts (2026-11-20), so name it.
+  # A site fact on the app axis: a cluster_resources block in unity.yaml would replace
+  # this whole block (mechababs merges the configs shallowly). `export SBATCH_PARTITION=cpu`
+  # in site-env.sh would also work, but keeps the partition out of the job script.
   customized_text: |
-    # Unity's default partition is restricted to other accounts (2026-11-20), so name it.
     #SBATCH --partition=cpu
     #SBATCH --cpus-per-task=2
     #SBATCH --mem=48G

@@ -2,8 +2,9 @@
 # examples/clusters/unity.yaml is an example and stays generic; this is what
 # actually runs, so the real paths live here rather than in that repo.
 #
-# apptainer is already on PATH (no module load) and `cpu` is the default
-# partition, so neither needs a line here.
+# apptainer is already on PATH (no module load), so it needs no line here.
+# The partition (`cpu`) is named in each app config's customized_text, not here:
+# see the comment there.
 script_preamble: |
   # Unity ships no git-annex, and its SLURM does not inherit the login shell's
   # PATH into jobs, so the compute node has to be told where it is. Without

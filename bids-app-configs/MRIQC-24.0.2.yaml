@@ -61,7 +61,12 @@ cluster_resources:
   # 40G rather than 24G: the 2026-08 Unity shakeout OOM'd synthstrip at 24G. The
   # bump fixed most of those jobs; one session still exceeded 40G, so this is a
   # floor that is known to work, not a proven ceiling.
+  # Unity's default partition is restricted to other accounts (2026-11-20), so name it.
+  # A site fact on the app axis: a cluster_resources block in unity.yaml would replace
+  # this whole block (mechababs merges the configs shallowly). `export SBATCH_PARTITION=cpu`
+  # in site-env.sh would also work, but keeps the partition out of the job script.
   customized_text: |
+    #SBATCH --partition=cpu
     #SBATCH --cpus-per-task=4
     #SBATCH --mem=48G
     #SBATCH --nodes=1

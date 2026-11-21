@@ -81,7 +81,12 @@ cluster_resources:
   # report TmpDisk=0), so --tmp=anything is rejected as unsatisfiable.
   # We bind ${JOB_TMP} to /tmp inside the container instead.
   # temporary_disk_space: 200G
+  # Unity's default partition is restricted to other accounts (2026-11-20), so name it.
+  # A site fact on the app axis: a cluster_resources block in unity.yaml would replace
+  # this whole block (mechababs merges the configs shallowly). `export SBATCH_PARTITION=cpu`
+  # in site-env.sh would also work, but keeps the partition out of the job script.
   customized_text: |
+    #SBATCH --partition=cpu
     #SBATCH --cpus-per-task=2
     #SBATCH --mem=55G
     #SBATCH --nodes=1
